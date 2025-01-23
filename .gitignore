@@ -1,0 +1,41 @@
+# Sensitive files
+.env
+*.json
+!package.json
+!package-lock.json
+
+# Google Service Account
+birthday-bot-*.json
+*-service-account.json
+service-account*.json
+
+# Secure directory
+secure/
+**/secure/
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build
+/build
+/dist
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Service account
+**/birthday-bot-*.json 
