@@ -46,20 +46,56 @@ app.post('/api/send-greeting', async (req, res) => {
     }
 });
 
+// Test endpoint to send greetings to all upcoming birthdays
+app.post('/api/test-all-greetings', async (req, res) => {
+    try {
+        const birthdays = await googleCalendar.getBirthdays(30); // next 30 days
+        const results = [];
+
+        for (const birthday of birthdays) {
+            try {
+                await telegram.sendBirthdayGreeting(birthday);
+                results.push({ 
+                    name: birthday.summary, 
+                    status: 'success',
+                    date: birthday.start.date
+                });
+            } catch (error) {
+                results.push({ 
+                    name: birthday.summary, 
+                    status: 'failed',
+                    date: birthday.start.date,
+                    error: error.message 
+                });
+            }
+        }
+
+        res.json({ 
+            total: birthdays.length,
+            results 
+        });
+    } catch (error) {
+        console.error('Error in test greetings:', error);
+        res.status(500).json({ error: 'Failed to send test greetings' });
+    }
+});
+
 // Schedule daily birthday check
 const checkBirthdays = async () => {
     try {
         const birthdays = await googleCalendar.getBirthdays();
         for (const birthday of birthdays) {
-            await telegram.sendBirthdayGreeting(birthday);
+            if (googleCalendar.isBirthdayToday(birthday)) {
+                await telegram.sendBirthdayGreeting(birthday);
+            }
         }
     } catch (error) {
         console.error('Error in birthday check:', error);
     }
 };
 
-// Run birthday check every day at 9 AM
-const job = schedule.scheduleJob('0 9 * * *', () => checkBirthdays());
+// Run birthday check every day at 11 AM
+const job = schedule.scheduleJob('0 11 * * *', () => checkBirthdays());
 
 app.get('/api/template', (req, res) => {
     try {

@@ -5,6 +5,7 @@ function App() {
     const [birthdays, setBirthdays] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [testingAll, setTestingAll] = useState(false);
 
     useEffect(() => {
         fetchBirthdays();
@@ -54,12 +55,55 @@ function App() {
         }
     };
 
+    const testAllGreetings = async () => {
+        if (!window.confirm('This will send test greetings to all birthdays in the next 30 days. Continue?')) {
+            return;
+        }
+        
+        setTestingAll(true);
+        try {
+            const response = await fetch('http://localhost:3001/api/test-all-greetings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            if (response.ok) {
+                const successCount = data.results.filter(r => r.status === 'success').length;
+                const message = `Sent ${successCount} of ${data.total} greetings successfully\n\n` +
+                    data.results.map(r => 
+                        `${r.name} (${new Date(r.date).toLocaleDateString()}): ${r.status}` +
+                        (r.error ? ` - ${r.error}` : '')
+                    ).join('\n');
+                alert(message);
+            } else {
+                throw new Error(data.error || 'Failed to send test greetings');
+            }
+        } catch (error) {
+            console.error('Error sending test greetings:', error);
+            alert('Failed to send test greetings');
+        } finally {
+            setTestingAll(false);
+        }
+    };
+
     if (loading) return <div>Loading...</div>;
     if (error) return <div>{error}</div>;
 
     return (
         <div className="App">
             <h1>Upcoming Birthday Greetings</h1>
+            <div className="controls">
+                <button 
+                    className="test-all-button"
+                    onClick={testAllGreetings}
+                    disabled={testingAll}
+                >
+                    {testingAll ? 'Sending...' : 'Test All Upcoming Birthdays'}
+                </button>
+            </div>
             <div className="birthday-list">
                 {birthdays.length === 0 ? (
                     <p>No birthdays in the next 30 days!</p>

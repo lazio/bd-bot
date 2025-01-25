@@ -26,66 +26,34 @@ class GoogleCalendarService {
         }
     }
 
-    async getBirthdays() {
+    async getBirthdays(daysAhead = 30) {
         try {
-            const today = new Date();
-            const thirtyDaysFromNow = new Date(today);
-            thirtyDaysFromNow.setDate(today.getDate() + 30);
+            const now = new Date();
+            const future = new Date();
+            future.setDate(now.getDate() + daysAhead);
 
-            console.log('Fetching events for calendar:', config.google.calendarId);
-            console.log('Time range:', {
-                from: today.toISOString(),
-                to: thirtyDaysFromNow.toISOString()
-            });
-            
             const response = await this.calendar.events.list({
                 calendarId: config.google.calendarId,
-                timeMin: today.toISOString(),
-                timeMax: thirtyDaysFromNow.toISOString(),
+                timeMin: now.toISOString(),
+                timeMax: future.toISOString(),
                 singleEvents: true,
                 orderBy: 'startTime',
                 maxResults: 2500
             });
 
-            const events = response.data.items || [];
-            console.log('Total events found:', events.length);
-            
-            // Log detailed information about each event
-            events.forEach(event => {
-                console.log('\nEvent details:', {
-                    id: event.id,
-                    summary: event.summary,
-                    description: event.description,
-                    start: event.start,
-                    end: event.end,
-                    created: event.created,
-                    updated: event.updated,
-                    status: event.status,
-                    creator: event.creator,
-                    organizer: event.organizer,
-                    attendees: event.attendees,
-                    recurrence: event.recurrence,
-                    recurringEventId: event.recurringEventId,
-                    originalStartTime: event.originalStartTime,
-                    transparency: event.transparency,
-                    visibility: event.visibility,
-                    iCalUID: event.iCalUID,
-                    sequence: event.sequence,
-                    eventType: event.eventType,
-                    reminders: event.reminders
-                });
-            });
-
-            // Sort events by date
-            return events.sort((a, b) => {
-                const dateA = new Date(a.start.date || a.start.dateTime);
-                const dateB = new Date(b.start.date || b.start.dateTime);
-                return dateA - dateB;
-            });
+            return response.data.items || [];
         } catch (error) {
-            console.error('Error fetching events:', error.response?.data || error);
+            console.error('Error fetching birthdays:', error);
             throw error;
         }
+    }
+
+    isBirthdayToday(birthday) {
+        const today = new Date();
+        const birthdayDate = new Date(birthday.start.date);
+        
+        return today.getDate() === birthdayDate.getDate() && 
+               today.getMonth() === birthdayDate.getMonth();
     }
 
     formatDate(date) {
